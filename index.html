@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <script src="pointOnGraph.js"></script>
+    <title>test</title>
+</head>
+<body>
+<canvas id="canvas" width="500" height="500" style="background: black"></canvas>
+<script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+    function testPointOnLine() {
+        var points = [0, 0, 500, 250];
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(points[0], points[1]);
+        ctx.lineTo(points[2], points[3]);
+        ctx.stroke();
+        ctx.fillStyle = 'red';
+        var x = 250, y = 120;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        var p = PointOnGraph.pointOnLine(x, y, points[0], points[1], points[2], points[3], 20);
+        if (p) {
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        console.log(p);
+    }
+
+    function testPointOnRect() {
+        var points = [50, 260, 100, 360];
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.rect(points[0], points[1], points[2] - points[0], points[3] - points[1]);
+        ctx.stroke();
+        ctx.fillStyle = 'red';
+        var x = 45, y = 280;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        var p = PointOnGraph.pointOnRect(x, y, points[0], points[1], points[2], points[3], 5);
+        if (p) {
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        console.log(p);
+    }
+
+    function testPointOnEllipse() {
+        var points = [250, 350, 100, 50];
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(points[0], points[1], points[2], points[3], 0, 0, 250 / 180 * Math.PI);
+        ctx.lineTo(points[0], points[1]);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillStyle = 'red';
+        var x = 225, y = 330;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        var p = PointOnGraph.pointOnEllipse(x, y, points[0], points[1], points[2], points[3], true, 0, 250, true, true, 20);
+        if (p) {
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        console.log(p);
+        ctx.fillStyle = 'red';
+        x = 230;
+        y = 395;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        p = PointOnGraph.pointOnEllipse(x, y, points[0], points[1], points[2], points[3], true, 0, 250, true, true, 20);
+        if (p) {
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        console.log(p);
+    }
+
+    function testPointOnBezierCurve() {
+        var points = [0, 0, 50, 500, 500, 50, 500, 500];
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(points[0], points[1]);
+        ctx.bezierCurveTo(points[2], points[3], points[4], points[5], points[6], points[7]);
+        ctx.stroke();
+        ctx.fillStyle = 'red';
+        var x = 250, y = 250;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        var p = PointOnGraph.pointOnBezierCurve(x, y, points, 20);
+        if (p) {
+            ctx.fillStyle = 'green';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        console.log(p);
+    }
+
+    testPointOnLine();
+    testPointOnRect();
+    testPointOnEllipse();
+    testPointOnBezierCurve();
+</script>
+</body>
+</html>
