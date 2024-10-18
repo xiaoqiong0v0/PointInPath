@@ -163,7 +163,6 @@ module PointOnGraph {
         const y = cy - rx * ry * angleTan / Math.sqrt(ry * ry + rx * rx * angleTan2);
         // 判断 输入点到 该点的距离是否在误差范围内
         const dis = Math.sqrt((px - x) * (px - x) + (py - y) * (py - y));
-        console.log(x, y, dis);
         if (dis <= tolerance) {
             return {x: x, y: y};
         }
@@ -212,10 +211,11 @@ module PointOnGraph {
      * @param px 点的x坐标
      * @param py 点的y坐标
      * @param points 贝塞尔曲线的点集
-     * @param tolerance 误差范围
+     * @param tolerance 误差范围 最小为0.00001 实际能不能达到与迭代的次数有关
+     * @param maxIteration 最大迭代次数 最小为1
      * @returns {Point | undefined} 点是否在三次贝塞尔曲线上
      */
-    export function pointOnBezierCurve(px: number, py: number, points: number[], tolerance: number = 0): Point | undefined {
+    export function pointOnBezierCurve(px: number, py: number, points: number[], tolerance: number = 0.00001, maxIteration: number = 100): Point | undefined {
         // n 阶贝塞尔曲线的公式 B(t) = Σ C(n, i) * (1 - t)^(n - i) * t^i * P(i)
         // 其中
         // n 为 n 阶
@@ -225,21 +225,12 @@ module PointOnGraph {
         // t 为 0 到 1
         // B(t) 为 曲线上的点
         // 如果点不在多个点组成的矩形范围内 则直接返回
-        // 如果误差为0 直接带入 px py 计算 t 在不在 0 到 1 之间
-        const n = (points.length - 2) / 2;
-        if (tolerance == 0) {
-            // t = (px - P(0).x) / (P(n).x - P(0).x)
-            let t = (px - points[0]) / (points[n * 2] - points[0]);
-            if (t < 0 || t > 1) {
-                return undefined;
-            }
-            return bezierCurve(t, points, n);
-        }
         let minX = points[0];
         let minY = points[1];
         let maxX = points[0];
         let maxY = points[1];
-        for (let i = 2; i < points.length; i += 2) {
+        let count = 0;
+        for (let i = 2; i < points.length; i += 2, count++) {
             minX = Math.min(minX, points[i]);
             minY = Math.min(minY, points[i + 1]);
             maxX = Math.max(maxX, points[i]);
@@ -248,32 +239,44 @@ module PointOnGraph {
         if (px < minX || px > maxX || py < minY || py > maxY) {
             return undefined;
         }
-        // todo 如何判断点在贝塞尔曲线上而不使用近似方法
-        // 先使用近似方法 二分法
-        const maxCount = 32;// 最多迭代32次
-        const minStep = 1 / Math.pow(2, maxCount);
-        let t = 0.5;
-        let step = 0.25;
-        let p1: Point, p2: Point;
-        let dis1: number, dis2: number;
-        while (step >= minStep) {
-            p1 = bezierCurve(t, points, n);
-            p2 = bezierCurve(t + step, points, n);
-            dis1 = Math.sqrt((px - p1.x) * (px - p1.x) + (py - p1.y) * (py - p1.y));
-            if (dis1 <= tolerance) {
-                return p1;
-            }
-            dis2 = Math.sqrt((px - p2.x) * (px - p2.x) + (py - p2.y) * (py - p2.y));
-            if (dis2 <= tolerance) {
-                return p2;
-            }
-            if (dis1 < dis2) {
-                t -= step;
-            } else {
-                t += step;
-            }
-            step /= 2;
+        if (tolerance < 0.00001) {
+            tolerance = 0.00001;
         }
-        return undefined;
+        if (maxIteration < 1) {
+            maxIteration = 1;
+        }
+        const enterPoint = {x: px, y: py};
+        const step = 0.01;
+        const distanceFunc = function (t: number) {
+            const tp = bezierCurve(t, points, count);
+            return Math.sqrt(Math.pow(enterPoint.x - tp.x, 2) + Math.pow(enterPoint.y - tp.y, 2));
+        }
+        let minDistance = Number.MAX_VALUE;
+        let minDistanceT: number = 0;
+        for (let t = 0; t <= 1; t += step) {
+            const distance = distanceFunc(t);
+            if (distance < minDistance) {
+                minDistance = distance;
+                minDistanceT = t;
+            }
+        }
+        let minT = Math.min(0, minDistanceT - step);
+        let maxT = Math.max(1, minDistanceT + step);
+        // 使用二分法让距离减小到误差范围内
+        for (let i = 0; i < maxIteration; i++) {
+            const t = (minT + maxT) / 2;
+            const distance = distanceFunc(t);
+            if (distance < minDistance) {
+                minDistance = distance;
+                minDistanceT = t;
+                minT = t;
+            } else {
+                maxT = t;
+            }
+            if (Math.abs(minDistance) <= tolerance) {
+                break;
+            }
+        }
+        return bezierCurve(minDistanceT, points, count);
     }
 }
